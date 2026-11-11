@@ -1,0 +1,34 @@
+// !$*UTF8*$!
+{
+ archiveVersion = 1;
+ classes = {};
+ objectVersion = 56;
+ objects = {
+  A00000000000000000000001 = {isa = PBXBuildFile; fileRef = B00000000000000000000001;};
+  A00000000000000000000002 = {isa = PBXBuildFile; fileRef = B00000000000000000000002;};
+  A00000000000000000000003 = {isa = PBXBuildFile; fileRef = B00000000000000000000003;};
+  A00000000000000000000004 = {isa = PBXBuildFile; fileRef = B00000000000000000000004;};
+  A00000000000000000000005 = {isa = PBXBuildFile; fileRef = B00000000000000000000005;};
+  A00000000000000000000006 = {isa = PBXBuildFile; fileRef = B00000000000000000000006;};
+  B00000000000000000000001 = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = MacUpdateScannerApp.swift; sourceTree = "<group>";};
+  B00000000000000000000002 = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Models.swift; sourceTree = "<group>";};
+  B00000000000000000000003 = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AppScanner.swift; sourceTree = "<group>";};
+  B00000000000000000000004 = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = UpdateChecker.swift; sourceTree = "<group>";};
+  B00000000000000000000005 = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ScannerModel.swift; sourceTree = "<group>";};
+  B00000000000000000000006 = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ContentView.swift; sourceTree = "<group>";};
+  B00000000000000000000007 = {isa = PBXFileReference; explicitFileType = wrapper.application; path = MacUpdateScanner.app; sourceTree = BUILT_PRODUCTS_DIR;};
+  C00000000000000000000001 = {isa = PBXFrameworksBuildPhase; buildActionMask = 2147483647; files = (); runOnlyForDeploymentPostprocessing = 0;};
+  C00000000000000000000002 = {isa = PBXSourcesBuildPhase; buildActionMask = 2147483647; files = (A00000000000000000000001,A00000000000000000000002,A00000000000000000000003,A00000000000000000000004,A00000000000000000000005,A00000000000000000000006,); runOnlyForDeploymentPostprocessing = 0;};
+  C00000000000000000000003 = {isa = PBXResourcesBuildPhase; buildActionMask = 2147483647; files = (); runOnlyForDeploymentPostprocessing = 0;};
+  D00000000000000000000001 = {isa = PBXGroup; children = (D00000000000000000000002,D00000000000000000000003,); sourceTree = "<group>";};
+  D00000000000000000000002 = {isa = PBXGroup; children = (B00000000000000000000001,B00000000000000000000002,B00000000000000000000003,B00000000000000000000004,B00000000000000000000005,B00000000000000000000006,); path = MacUpdateScanner; sourceTree = "<group>";};
+  D00000000000000000000003 = {isa = PBXGroup; children = (B00000000000000000000007,); name = Products; sourceTree = "<group>";};
+  E00000000000000000000001 = {isa = PBXNativeTarget; buildConfigurationList = F00000000000000000000002; buildPhases = (C00000000000000000000002,C00000000000000000000001,C00000000000000000000003,); buildRules = (); dependencies = (); name = MacUpdateScanner; productName = MacUpdateScanner; productReference = B00000000000000000000007; productType = "com.apple.product-type.application";};
+  E00000000000000000000002 = {isa = PBXProject; attributes = {BuildIndependentTargetsInParallel = 1; LastUpgradeCheck = 1400;}; buildConfigurationList = F00000000000000000000001; compatibilityVersion = "Xcode 14.0"; developmentRegion = en; hasScannedForEncodings = 0; knownRegions = (en,Base,); mainGroup = D00000000000000000000001; productRefGroup = D00000000000000000000003; projectDirPath = ""; projectRoot = ""; targets = (E00000000000000000000001,);};
+  F00000000000000000000001 = {isa = XCConfigurationList; buildConfigurations = (F10000000000000000000001,F10000000000000000000002,); defaultConfigurationIsVisible = 0; defaultConfigurationName = Release;};
+  F00000000000000000000002 = {isa = XCConfigurationList; buildConfigurations = (F10000000000000000000001,F10000000000000000000002,); defaultConfigurationIsVisible = 0; defaultConfigurationName = Release;};
+  F10000000000000000000001 = {isa = XCBuildConfiguration; buildSettings = {MACOSX_DEPLOYMENT_TARGET = 12.0; PRODUCT_BUNDLE_IDENTIFIER = com.macupdatescanner.app; PRODUCT_NAME = "$(TARGET_NAME)"; SWIFT_VERSION = 5.0; SWIFT_OPTIMIZATION_LEVEL = "-Onone"; ARCHS = x86_64; ONLY_ACTIVE_ARCH = YES; ENABLE_APP_SANDBOX = NO; CODE_SIGNING_ALLOWED = NO; GENERATE_INFOPLIST_FILE = YES; INFOPLIST_KEY_CFBundleDisplayName = "MacUpdate Scanner"; INFOPLIST_KEY_LSApplicationCategoryType = "public.app-category.utilities";}; name = Debug;};
+  F10000000000000000000002 = {isa = XCBuildConfiguration; buildSettings = {MACOSX_DEPLOYMENT_TARGET = 12.0; PRODUCT_BUNDLE_IDENTIFIER = com.macupdatescanner.app; PRODUCT_NAME = "$(TARGET_NAME)"; SWIFT_VERSION = 5.0; SWIFT_OPTIMIZATION_LEVEL = "-O"; ARCHS = x86_64; ONLY_ACTIVE_ARCH = YES; ENABLE_APP_SANDBOX = NO; CODE_SIGNING_ALLOWED = NO; GENERATE_INFOPLIST_FILE = YES; INFOPLIST_KEY_CFBundleDisplayName = "MacUpdate Scanner"; INFOPLIST_KEY_LSApplicationCategoryType = "public.app-category.utilities";}; name = Release;};
+ };
+ rootObject = E00000000000000000000002;
+}
