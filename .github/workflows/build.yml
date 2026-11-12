@@ -1,1 +1,63 @@
 
+name: Build MacUpdate Scanner (Intel / Monterey)
+
+on:
+  workflow_dispatch:
+  push:
+    branches:
+      - main
+
+jobs:
+  build:
+    runs-on: macos-15-intel
+    steps:
+      - name: Check out repository
+        uses: actions/checkout@v4
+
+      - name: Show build environment
+        run: |
+          sw_vers
+          uname -m
+          xcodebuild -version
+
+      - name: Locate Xcode project
+        run: |
+          find . -name "*.xcodeproj" -maxdepth 5
+
+      - name: Build Intel app
+        run: |
+          PROJECT=$(find . -name "*.xcodeproj" -maxdepth 5 | head -n 1)
+          if [ -z "$PROJECT" ]; then
+            echo "Xcode project not found"
+            exit 1
+          fi
+
+          xcodebuild \
+            -project "$PROJECT" \
+            -scheme MacUpdateScanner \
+            -configuration Release \
+            -sdk macosx \
+            -derivedDataPath build \
+            ARCHS=x86_64 \
+            ONLY_ACTIVE_ARCH=NO \
+            CODE_SIGNING_ALLOWED=NO \
+            MACOSX_DEPLOYMENT_TARGET=12.0 \
+            build
+
+      - name: Package application
+        run: |
+          APP=$(find build/Build/Products/Release -maxdepth 1 -name "*.app" | head -n 1)
+          if [ -z "$APP" ]; then
+            echo "Application was not generated"
+            exit 1
+          fi
+          mkdir -p release
+          ditto "$APP" release/MacUpdateScanner.app
+          ditto -c -k --sequesterRsrc --keepParent release/MacUpdateScanner.app release/MacUpdateScanner-Intel-Monterey.zip
+
+      - name: Upload application
+        uses: actions/upload-artifact@v4
+        with:
+          name: MacUpdateScanner-Intel-Monterey
+          path: release/MacUpdateScanner-Intel-Monterey.zip
+
