@@ -98,7 +98,7 @@ struct ContentView: View {
             if model.isScanning { ProgressView().controlSize(.small) }
             Text(model.statusMessage).font(.caption).foregroundColor(.secondary)
             Spacer()
-            Text("Intel · macOS 12+").font(.caption2).foregroundColor(.tertiary)
+            Text("Intel · macOS 12+").font(.caption2)..foregroundColor(Color.secondary)
         }
         .padding(.horizontal, 20).padding(.vertical, 10)
         .background(Color(NSColor.controlBackgroundColor))
