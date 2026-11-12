@@ -6,24 +6,22 @@ final class AppScanner {
         let fm = FileManager.default
         let home = fm.homeDirectoryForCurrentUser
 
-        // Scan user-facing application folders only. A recursive scan of "/" and
-        // CoreServices discovers many internal agents and helper apps that are
-        // not independently updated like normal applications.
+        // Scan normal application locations, not the entire filesystem.
+        // Recursively scanning "/" discovers internal agents and helper apps.
         var roots: [URL] = [
             URL(fileURLWithPath: "/Applications", isDirectory: true),
             URL(fileURLWithPath: "/System/Applications", isDirectory: true),
             home.appendingPathComponent("Applications", isDirectory: true)
         ]
 
-        // Search mounted external volumes too. Avoid system-managed mount points.
+        // Include mounted external/network volumes, but not APFS system mounts.
         if let volumes = fm.mountedVolumeURLs(
             includingResourceValuesForKeys: [.volumeIsLocalKey],
             options: [.skipHiddenVolumes]
         ) {
             for volume in volumes
-            where volume.path != "/"
-                && !volume.path.hasPrefix("/System/Volumes/")
-                && !volume.path.hasPrefix("/Volumes/") == false {
+            where volume.path.hasPrefix("/Volumes/")
+                && !volume.path.hasPrefix("/System/Volumes/") {
                 roots.append(volume)
             }
         }
