@@ -1,7 +1,7 @@
 
 name: Build MacUpdate Scanner (Intel / Monterey)
 
-on:
+'on':
   workflow_dispatch:
   push:
     branches:
@@ -10,11 +10,12 @@ on:
 jobs:
   build:
     runs-on: macos-15-intel
+
     steps:
       - name: Check out repository
         uses: actions/checkout@v4
 
-      - name: Show build environment
+      - name: Check build environment
         run: |
           sw_vers
           uname -m
@@ -24,7 +25,7 @@ jobs:
         run: |
           find . -name "*.xcodeproj" -maxdepth 5
 
-      - name: Build Intel app
+      - name: Build application
         run: |
           PROJECT=$(find . -name "*.xcodeproj" -maxdepth 5 | head -n 1)
           if [ -z "$PROJECT" ]; then
@@ -60,4 +61,3 @@ jobs:
         with:
           name: MacUpdateScanner-Intel-Monterey
           path: release/MacUpdateScanner-Intel-Monterey.zip
-
