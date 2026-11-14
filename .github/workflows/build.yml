@@ -6,6 +6,7 @@ name: Build MacUpdate Scanner (Intel / Monterey)
   push:
     branches:
       - main
+      - improve-unverified-detection
 
 jobs:
   build:
