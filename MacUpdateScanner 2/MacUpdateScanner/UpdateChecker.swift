@@ -76,7 +76,7 @@ final class UpdateChecker {
         if candidateToken == nil, let brew = findBrew() {
             let output = run(brew, arguments: ["list", "--cask", "--versions"])
             let appToken = app.name.normalizedAppToken
-            candidateToken = output.split(separator: "\\n").compactMap { line -> String? in
+            candidateToken = output.split(separator: "\n").compactMap { line -> String? in
                 let parts = line.split(whereSeparator: { $0.isWhitespace })
                 guard parts.count >= 2 else { return nil }
                 let token = String(parts[0])
@@ -86,13 +86,13 @@ final class UpdateChecker {
         }
 
         guard let token = candidateToken,
-              let url = URL(string: "https://formulae.brew.sh/api/cask/\\(token).json"),
+              let url = URL(string: "https://formulae.brew.sh/api/cask/\(token).json"),
               let (data, _) = try? await URLSession.shared.data(from: url),
               let json = try? JSONSerialization.jsonObject(with: data) as? [String: Any],
               let version = json["version"] as? String,
               version.lowercased() != "latest" else { return nil }
         return UpdateResult(latestVersion: version, sourceName: "Homebrew Cask",
-                            sourceURL: URL(string: "https://formulae.brew.sh/cask/\\(token)"),
+                            sourceURL: URL(string: "https://formulae.brew.sh/cask/\(token)"),
                             brewToken: token, appStoreURL: nil)
     }
 
