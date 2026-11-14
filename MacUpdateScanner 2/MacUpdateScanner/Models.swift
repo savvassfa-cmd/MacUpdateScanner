@@ -14,6 +14,11 @@ struct AppRecord: Identifiable {
     var status: UpdateStatus = .checking
     var details: String = "Not checked yet"
 
+    var isManagedBySystem: Bool {
+        let path = path.standardizedFileURL.path
+        return path.hasPrefix("/System/Applications/") || path.hasPrefix("/System/Library/")
+    }
+
     var canInstall: Bool {
         if status != .updateAvailable { return false }
         return brewToken != nil || appStoreURL != nil || sourceURL != nil
@@ -22,6 +27,7 @@ struct AppRecord: Identifiable {
 
 enum UpdateStatus: String {
     case checking = "Checking"
+    case managedBySystem = "Managed by macOS"
     case updateAvailable = "Update available"
     case upToDate = "Up to date"
     case unverified = "Unable to verify"
