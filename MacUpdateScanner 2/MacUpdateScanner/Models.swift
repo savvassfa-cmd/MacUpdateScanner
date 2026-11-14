@@ -31,7 +31,7 @@ struct AppRecord: Identifiable {
         default:
             return nil
         }
-        return URL(string: "https://apps.apple.com/app/id\\(appStoreID)")
+        return URL(string: "https://apps.apple.com/app/id\(appStoreID)")
     }
 
     var canInstall: Bool {
