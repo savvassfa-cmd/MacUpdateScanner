@@ -60,6 +60,7 @@ struct ContentView: View {
                 Text("Up to date").tag("Up to date")
                 Text("Unverified").tag("Unverified")
                 Text("System apps").tag("System")
+                Text("App Store").tag("App Store")
             }
             .frame(width: 150)
             .labelsHidden()
@@ -159,6 +160,7 @@ private struct AppRow: View {
         case .upToDate: Text("CURRENT").font(.system(size: 9, weight: .bold)).foregroundColor(.green)
         case .checking: Text("CHECKING").font(.system(size: 9, weight: .bold)).foregroundColor(.blue)
         case .managedBySystem: Text("macOS").font(.system(size: 9, weight: .bold)).foregroundColor(.secondary)
+        case .appStoreManaged: Text("APP STORE").font(.system(size: 9, weight: .bold)).foregroundColor(.secondary)
         case .unverified, .error: Text("UNVERIFIED").font(.system(size: 9, weight: .bold)).foregroundColor(.secondary)
         }
     }
