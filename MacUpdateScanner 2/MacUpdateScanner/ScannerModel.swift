@@ -95,7 +95,7 @@ final class ScannerModel: ObservableObject {
             guard let brew = ["/opt/homebrew/bin/brew", "/usr/local/bin/brew"].first(where: { FileManager.default.isExecutableFile(atPath: $0) }) else {
                 if let url = app.sourceURL {
                     NSWorkspace.shared.open(url)
-                    alertMessage = "Homebrew is not installed. Opened the official Homebrew Cask page for \\(app.name) so you can download it from the developer."
+                    alertMessage = "Homebrew is not installed. Opened the official Homebrew Cask page for \(app.name) so you can download it from the developer."
                 } else {
                     alertMessage = "Homebrew was not found and no official update page is available."
                 }
@@ -108,9 +108,9 @@ final class ScannerModel: ObservableObject {
             process.standardError = FileHandle.nullDevice
             do {
                 try process.run()
-                alertMessage = "Homebrew started updating \\(app.name). The operation may request your Mac password in Terminal if required."
+                alertMessage = "Homebrew started updating \(app.name). The operation may request your Mac password in Terminal if required."
             } catch {
-                alertMessage = "Could not start Homebrew: \\(error.localizedDescription)"
+                alertMessage = "Could not start Homebrew: \(error.localizedDescription)"
             }
             return
         }
