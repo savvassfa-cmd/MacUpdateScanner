@@ -23,6 +23,7 @@ final class ScannerModel: ObservableObject {
             case "Updates": matchesFilter = app.status == .updateAvailable
             case "Up to date": matchesFilter = app.status == .upToDate
             case "Unverified": matchesFilter = app.status == .unverified || app.status == .error
+            case "System": matchesFilter = app.status == .managedBySystem
             default: matchesFilter = true
             }
             return matchesSearch && matchesFilter
@@ -32,6 +33,7 @@ final class ScannerModel: ObservableObject {
     var updateCount: Int { apps.filter { $0.status == .updateAvailable }.count }
     var upToDateCount: Int { apps.filter { $0.status == .upToDate }.count }
     var unverifiedCount: Int { apps.filter { $0.status == .unverified || $0.status == .error }.count }
+    var systemAppCount: Int { apps.filter { $0.status == .managedBySystem }.count }
 
     func scan() {
         guard !isScanning else { return }
@@ -48,6 +50,11 @@ final class ScannerModel: ObservableObject {
                 let snapshot = apps[index]
                 apps[index].status = .checking
                 statusMessage = "Checking \(snapshot.name) (\(index + 1) of \(discovered.count))…"
+                if snapshot.isManagedBySystem {
+                    apps[index].status = .managedBySystem
+                    apps[index].details = "Apple system app — updates are delivered through macOS Software Update"
+                    continue
+                }
                 if let result = await checker.check(snapshot) {
                     apps[index].latestVersion = result.latestVersion
                     apps[index].sourceName = result.sourceName
