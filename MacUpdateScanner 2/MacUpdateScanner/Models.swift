@@ -19,7 +19,23 @@ struct AppRecord: Identifiable {
         return path.hasPrefix("/System/Applications/") || path.hasPrefix("/System/Library/")
     }
 
+    var iWorkAppStoreURL: URL? {
+        let appStoreID: String
+        switch bundleID {
+        case "com.apple.iWork.Numbers", "com.apple.Numbers":
+            appStoreID = "409203825"
+        case "com.apple.iWork.Pages", "com.apple.Pages":
+            appStoreID = "409201541"
+        case "com.apple.iWork.Keynote", "com.apple.Keynote":
+            appStoreID = "409183694"
+        default:
+            return nil
+        }
+        return URL(string: "https://apps.apple.com/app/id\\(appStoreID)")
+    }
+
     var canInstall: Bool {
+        if status == .appStoreManaged { return appStoreURL != nil }
         if status != .updateAvailable { return false }
         return brewToken != nil || appStoreURL != nil || sourceURL != nil
     }
@@ -28,6 +44,7 @@ struct AppRecord: Identifiable {
 enum UpdateStatus: String {
     case checking = "Checking"
     case managedBySystem = "Managed by macOS"
+    case appStoreManaged = "Managed by App Store"
     case updateAvailable = "Update available"
     case upToDate = "Up to date"
     case unverified = "Unable to verify"
