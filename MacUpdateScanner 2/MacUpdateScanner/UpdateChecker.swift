@@ -50,25 +50,49 @@ final class UpdateChecker {
     }
 
     private func checkHomebrew(app: AppRecord) async -> UpdateResult? {
-        guard let brew = findBrew() else { return nil }
-        let output = run(brew, arguments: ["list", "--cask", "--versions"])
-        let appToken = app.name.normalizedAppToken
-        let match = output.split(separator: "\n").compactMap { line -> (String, String)? in
-            let parts = line.split(whereSeparator: { $0.isWhitespace })
-            guard parts.count >= 2 else { return nil }
-            let token = String(parts[0])
-            let normalized = token.normalizedAppToken
-            if normalized == appToken || normalized.contains(appToken) || appToken.contains(normalized) {
-                return (token, String(parts[1]))
-            }
-            return nil
-        }.first
-        guard let (token, _) = match,
-              let url = URL(string: "https://formulae.brew.sh/api/cask/\(token).json"),
+        // Curated aliases let us verify common apps even when they were not installed with Homebrew.
+        // Match exact bundle identifiers first, then exact normalized display names.
+        let knownTokensByBundleID: [String: String] = [
+            "com.google.Chrome": "google-chrome",
+            "org.videolan.vlc": "vlc",
+            "us.zoom.xos": "zoom",
+            "com.windscribe.Windscribe": "windscribe",
+            "com.colliderli.iina": "iina",
+            "com.canon.EOS_Utility": "canon-eos-utility"
+        ]
+        let knownTokensByName: [String: String] = [
+            "googlechrome": "google-chrome",
+            "vlc": "vlc",
+            "zoom": "zoom",
+            "windscribe": "windscribe",
+            "iina": "iina",
+            "canoneosutility": "canon-eos-utility"
+        ]
+
+        var candidateToken = knownTokensByBundleID[app.bundleID]
+            ?? knownTokensByName[app.name.normalizedAppToken]
+
+        // Preserve support for apps actually installed through Homebrew Cask.
+        if candidateToken == nil, let brew = findBrew() {
+            let output = run(brew, arguments: ["list", "--cask", "--versions"])
+            let appToken = app.name.normalizedAppToken
+            candidateToken = output.split(separator: "\\n").compactMap { line -> String? in
+                let parts = line.split(whereSeparator: { $0.isWhitespace })
+                guard parts.count >= 2 else { return nil }
+                let token = String(parts[0])
+                let normalized = token.normalizedAppToken
+                return normalized == appToken ? token : nil
+            }.first
+        }
+
+        guard let token = candidateToken,
+              let url = URL(string: "https://formulae.brew.sh/api/cask/\\(token).json"),
               let (data, _) = try? await URLSession.shared.data(from: url),
               let json = try? JSONSerialization.jsonObject(with: data) as? [String: Any],
-              let version = json["version"] as? String else { return nil }
-        return UpdateResult(latestVersion: version, sourceName: "Homebrew Cask", sourceURL: URL(string: "https://formulae.brew.sh/cask/\(token)"),
+              let version = json["version"] as? String,
+              version.lowercased() != "latest" else { return nil }
+        return UpdateResult(latestVersion: version, sourceName: "Homebrew Cask",
+                            sourceURL: URL(string: "https://formulae.brew.sh/cask/\\(token)"),
                             brewToken: token, appStoreURL: nil)
     }
 
