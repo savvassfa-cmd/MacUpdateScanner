@@ -24,6 +24,7 @@ final class ScannerModel: ObservableObject {
             case "Up to date": matchesFilter = app.status == .upToDate
             case "Unverified": matchesFilter = app.status == .unverified || app.status == .error
             case "System": matchesFilter = app.status == .managedBySystem
+            case "App Store": matchesFilter = app.status == .appStoreManaged
             default: matchesFilter = true
             }
             return matchesSearch && matchesFilter
@@ -71,6 +72,13 @@ final class ScannerModel: ObservableObject {
                         apps[index].status = .upToDate
                         apps[index].details = "Verified via \(result.sourceName)"
                     }
+                } else if let storeURL = snapshot.iWorkAppStoreURL {
+                    // Apple iWork apps are updated through the Mac App Store.
+                    // If Apple's public catalog cannot confirm a version, offer the official store
+                    // page without claiming that the installed copy is up to date.
+                    apps[index].status = .appStoreManaged
+                    apps[index].appStoreURL = storeURL
+                    apps[index].details = "Updates are managed through the Mac App Store; installed version could not be independently verified"
                 } else {
                     apps[index].status = .unverified
                     apps[index].details = "No reliable public version source was found"
