@@ -68,7 +68,8 @@ final class UpdateChecker {
             "windscribe": "windscribe",
             "iina": "iina",
             "canoneosutility": "canon-eos-utility",
-            "remoteplay": "sony-ps-remote-play"
+            "remoteplay": "sony-ps-remote-play",
+            "stremio": "stremio@beta"
         ]
 
         var candidateToken = knownTokensByBundleID[app.bundleID]
