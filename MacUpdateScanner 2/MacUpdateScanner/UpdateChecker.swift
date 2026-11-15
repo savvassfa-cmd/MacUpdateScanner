@@ -130,9 +130,7 @@ final class UpdateChecker {
     private func checkGitLab(app: AppRecord) async -> UpdateResult? {
         // GitLab's public Releases API is supported for explicitly mapped projects.
         // Never infer a project from a bundle identifier or app name.
-        let repositories: [String: String] = [
-            // Add verified "bundle identifier": "group/project" mappings here.
-        ]
+        let repositories: [String: String] = [:] // Add verified bundle-ID to GitLab project mappings here.
         let infoURL = app.path.appendingPathComponent("Contents/Info.plist")
         let plist = (try? Data(contentsOf: infoURL)).flatMap {
             try? PropertyListSerialization.propertyList(from: $0, options: [], format: nil) as? [String: Any]
