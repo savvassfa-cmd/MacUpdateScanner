@@ -133,8 +133,13 @@ final class UpdateChecker {
         let repositories: [String: String] = [
             // Add verified "bundle identifier": "group/project" mappings here.
         ]
-        guard let project = repositories[app.bundleID],
-              let encodedProject = project.addingPercentEncoding(withAllowedCharacters: .urlPathAllowed),
+        let infoURL = app.path.appendingPathComponent("Contents/Info.plist")
+        let plist = (try? Data(contentsOf: infoURL)).flatMap {
+            try? PropertyListSerialization.propertyList(from: $0, options: [], format: nil) as? [String: Any]
+        }
+        let project = repositories[app.bundleID] ?? (plist?["GitLabProjectPath"] as? String)
+        guard let project, !project.isEmpty,
+              let encodedProject = project.replacingOccurrences(of: "/", with: "%2F"),
               let url = URL(string: "https://gitlab.com/api/v4/projects/\\(encodedProject)/releases/permalink/latest") else {
             return nil
         }
