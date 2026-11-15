@@ -69,7 +69,8 @@ final class UpdateChecker {
             "iina": "iina",
             "canoneosutility": "canon-eos-utility",
             "remoteplay": "sony-ps-remote-play",
-            "stremio": "stremio@beta"
+            "stremio": "stremio@beta",
+            "qbittorrent": "qbittorrent"
         ]
 
         var candidateToken = knownTokensByBundleID[app.bundleID]
