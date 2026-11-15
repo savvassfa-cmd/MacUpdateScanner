@@ -144,7 +144,7 @@ private struct AppRow: View {
                     .font(.caption).foregroundColor(.secondary)
                 Text(app.details).font(.caption2).foregroundColor(.secondary).lineLimit(1)
                 if app.status == .unverified || app.status == .error {
-                    Text("Bundle ID: \\(app.bundleID.isEmpty ? \"Not available\" : app.bundleID)")
+                    Text("Bundle ID: \(app.bundleID.isEmpty ? "Not available" : app.bundleID)")
                         .font(.system(size: 10, design: .monospaced))
                         .foregroundColor(.secondary)
                         .textSelection(.enabled)
