@@ -53,7 +53,14 @@ final class ScannerModel: ObservableObject {
                 statusMessage = "Checking \(snapshot.name) (\(index + 1) of \(discovered.count))…"
                 if snapshot.isManagedBySystem {
                     apps[index].status = .managedBySystem
-                    apps[index].details = "Apple system app — updates are delivered through macOS Software Update"
+                    if let result = await checker.check(snapshot) {
+                        apps[index].latestVersion = result.latestVersion
+                        apps[index].sourceName = result.sourceName
+                        apps[index].sourceURL = result.sourceURL
+                        apps[index].details = "Apple system app — latest Safari version reported by \\(result.sourceName): \\(result.latestVersion). Install updates through macOS Software Update"
+                    } else {
+                        apps[index].details = "Apple system app — updates are delivered through macOS Software Update"
+                    }
                     continue
                 }
                 if let result = await checker.check(snapshot) {
