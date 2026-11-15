@@ -137,8 +137,8 @@ final class UpdateChecker {
         }
         let project = repositories[app.bundleID] ?? (plist?["GitLabProjectPath"] as? String)
         guard let project, !project.isEmpty,
-              let encodedProject = project.replacingOccurrences(of: "/", with: "%2F"),
-              let url = URL(string: "https://gitlab.com/api/v4/projects/\\(encodedProject)/releases/permalink/latest") else {
+              let encodedProject = project.addingPercentEncoding(withAllowedCharacters: .urlPathAllowed) ?? project,
+              let url = URL(string: "https://gitlab.com/api/v4/projects/\(encodedProject)/releases/permalink/latest") else {
             return nil
         }
         var request = URLRequest(url: url)
