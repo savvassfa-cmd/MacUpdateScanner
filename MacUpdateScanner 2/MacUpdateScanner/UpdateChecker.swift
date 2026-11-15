@@ -58,7 +58,8 @@ final class UpdateChecker {
             "us.zoom.xos": "zoom",
             "com.windscribe.Windscribe": "windscribe",
             "com.colliderli.iina": "iina",
-            "com.canon.EOS_Utility": "canon-eos-utility"
+            "com.canon.EOS_Utility": "canon-eos-utility",
+            "com.playstation.RemotePlay": "sony-ps-remote-play"
         ]
         let knownTokensByName: [String: String] = [
             "googlechrome": "google-chrome",
@@ -66,7 +67,8 @@ final class UpdateChecker {
             "zoom": "zoom",
             "windscribe": "windscribe",
             "iina": "iina",
-            "canoneosutility": "canon-eos-utility"
+            "canoneosutility": "canon-eos-utility",
+            "remoteplay": "sony-ps-remote-play"
         ]
 
         var candidateToken = knownTokensByBundleID[app.bundleID]
