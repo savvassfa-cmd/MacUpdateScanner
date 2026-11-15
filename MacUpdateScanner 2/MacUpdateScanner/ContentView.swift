@@ -143,6 +143,12 @@ private struct AppRow: View {
                 Text("Installed: \(app.installedVersion)" + (app.latestVersion.map { "  ·  Latest: \($0)" } ?? ""))
                     .font(.caption).foregroundColor(.secondary)
                 Text(app.details).font(.caption2).foregroundColor(.secondary).lineLimit(1)
+                if app.status == .unverified || app.status == .error {
+                    Text("Bundle ID: \\(app.bundleID.isEmpty ? \"Not available\" : app.bundleID)")
+                        .font(.system(size: 10, design: .monospaced))
+                        .foregroundColor(.secondary)
+                        .textSelection(.enabled)
+                }
             }
             Spacer(minLength: 8)
             if app.canInstall {
