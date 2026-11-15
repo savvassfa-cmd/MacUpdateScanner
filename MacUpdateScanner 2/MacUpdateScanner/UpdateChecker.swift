@@ -136,9 +136,9 @@ final class UpdateChecker {
             try? PropertyListSerialization.propertyList(from: $0, options: [], format: nil) as? [String: Any]
         }
         let project = repositories[app.bundleID] ?? (plist?["GitLabProjectPath"] as? String)
-        guard let project, !project.isEmpty,
-              let encodedProject = project.addingPercentEncoding(withAllowedCharacters: .urlPathAllowed) ?? project,
-              let url = URL(string: "https://gitlab.com/api/v4/projects/\(encodedProject)/releases/permalink/latest") else {
+        guard let project, !project.isEmpty else { return nil }
+        let encodedProject = project.addingPercentEncoding(withAllowedCharacters: .urlPathAllowed) ?? project
+        guard let url = URL(string: "https://gitlab.com/api/v4/projects/\(encodedProject)/releases/permalink/latest") else {
             return nil
         }
         var request = URLRequest(url: url)
