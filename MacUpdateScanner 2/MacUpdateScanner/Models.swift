@@ -67,7 +67,7 @@ extension String {
         func normalizedVersion(_ value: String) -> String {
             let trimmed = value.trimmingCharacters(in: .whitespacesAndNewlines)
             return trimmed.replacingOccurrences(
-                of: #"\\s*\\((\\d+)\\)"#,
+                of: #"\s*\((\d+)\)"#,
                 with: ".$1",
                 options: .regularExpression
             )
