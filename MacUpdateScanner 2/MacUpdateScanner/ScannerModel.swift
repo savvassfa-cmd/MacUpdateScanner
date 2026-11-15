@@ -23,6 +23,8 @@ final class ScannerModel: ObservableObject {
             case "Updates": matchesFilter = app.status == .updateAvailable
             case "Up to date": matchesFilter = app.status == .upToDate
             case "Unverified": matchesFilter = app.status == .unverified || app.status == .error
+            case "System": matchesFilter = app.status == .managedBySystem
+            case "App Store": matchesFilter = app.status == .appStoreManaged
             default: matchesFilter = true
             }
             return matchesSearch && matchesFilter
@@ -32,6 +34,7 @@ final class ScannerModel: ObservableObject {
     var updateCount: Int { apps.filter { $0.status == .updateAvailable }.count }
     var upToDateCount: Int { apps.filter { $0.status == .upToDate }.count }
     var unverifiedCount: Int { apps.filter { $0.status == .unverified || $0.status == .error }.count }
+    var systemAppCount: Int { apps.filter { $0.status == .managedBySystem }.count }
 
     func scan() {
         guard !isScanning else { return }
@@ -48,6 +51,18 @@ final class ScannerModel: ObservableObject {
                 let snapshot = apps[index]
                 apps[index].status = .checking
                 statusMessage = "Checking \(snapshot.name) (\(index + 1) of \(discovered.count))…"
+                if snapshot.isManagedBySystem {
+                    apps[index].status = .managedBySystem
+                    if let result = await checker.check(snapshot) {
+                        apps[index].latestVersion = result.latestVersion
+                        apps[index].sourceName = result.sourceName
+                        apps[index].sourceURL = result.sourceURL
+                        apps[index].details = "Apple system app — latest Safari version reported by \(result.sourceName): \(result.latestVersion). Install updates through macOS Software Update"
+                    } else {
+                        apps[index].details = "Apple system app — updates are delivered through macOS Software Update"
+                    }
+                    continue
+                }
                 if let result = await checker.check(snapshot) {
                     apps[index].latestVersion = result.latestVersion
                     apps[index].sourceName = result.sourceName
@@ -64,6 +79,13 @@ final class ScannerModel: ObservableObject {
                         apps[index].status = .upToDate
                         apps[index].details = "Verified via \(result.sourceName)"
                     }
+                } else if let storeURL = snapshot.iWorkAppStoreURL {
+                    // Apple iWork apps are updated through the Mac App Store.
+                    // If Apple's public catalog cannot confirm a version, offer the official store
+                    // page without claiming that the installed copy is up to date.
+                    apps[index].status = .appStoreManaged
+                    apps[index].appStoreURL = storeURL
+                    apps[index].details = "Updates are managed through the Mac App Store; installed version could not be independently verified"
                 } else {
                     apps[index].status = .unverified
                     apps[index].details = "No reliable public version source was found"
@@ -78,7 +100,12 @@ final class ScannerModel: ObservableObject {
     func install(_ app: AppRecord) {
         if let token = app.brewToken {
             guard let brew = ["/opt/homebrew/bin/brew", "/usr/local/bin/brew"].first(where: { FileManager.default.isExecutableFile(atPath: $0) }) else {
-                alertMessage = "Homebrew was not found. Install Homebrew or use the application's official download page."
+                if let url = app.sourceURL {
+                    NSWorkspace.shared.open(url)
+                    alertMessage = "Homebrew is not installed. Opened the official Homebrew Cask page for \(app.name) so you can download it from the developer."
+                } else {
+                    alertMessage = "Homebrew was not found and no official update page is available."
+                }
                 return
             }
             let process = Process()

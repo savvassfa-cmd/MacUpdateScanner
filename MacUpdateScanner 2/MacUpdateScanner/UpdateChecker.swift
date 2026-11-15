@@ -14,6 +14,12 @@ final class UpdateChecker {
         if let result = await checkKnownGitHub(app: app) {
             return result
         }
+        if let result = await checkGitLab(app: app) {
+            return result
+        }
+        if let result = await checkSOFA(app: app) {
+            return result
+        }
         return nil
     }
 
@@ -50,25 +56,53 @@ final class UpdateChecker {
     }
 
     private func checkHomebrew(app: AppRecord) async -> UpdateResult? {
-        guard let brew = findBrew() else { return nil }
-        let output = run(brew, arguments: ["list", "--cask", "--versions"])
-        let appToken = app.name.normalizedAppToken
-        let match = output.split(separator: "\n").compactMap { line -> (String, String)? in
-            let parts = line.split(whereSeparator: { $0.isWhitespace })
-            guard parts.count >= 2 else { return nil }
-            let token = String(parts[0])
-            let normalized = token.normalizedAppToken
-            if normalized == appToken || normalized.contains(appToken) || appToken.contains(normalized) {
-                return (token, String(parts[1]))
-            }
-            return nil
-        }.first
-        guard let (token, _) = match,
+        // Curated aliases let us verify common apps even when they were not installed with Homebrew.
+        // Match exact bundle identifiers first, then exact normalized display names.
+        let knownTokensByBundleID: [String: String] = [
+            "com.google.Chrome": "google-chrome",
+            "org.videolan.vlc": "vlc",
+            "us.zoom.xos": "zoom",
+            "com.windscribe.Windscribe": "windscribe",
+            "com.colliderli.iina": "iina",
+            "com.canon.EOS_Utility": "canon-eos-utility",
+            "com.playstation.RemotePlay": "sony-ps-remote-play"
+        ]
+        let knownTokensByName: [String: String] = [
+            "googlechrome": "google-chrome",
+            "vlc": "vlc",
+            "zoom": "zoom",
+            "windscribe": "windscribe",
+            "iina": "iina",
+            "canoneosutility": "canon-eos-utility",
+            "remoteplay": "sony-ps-remote-play",
+            "stremio": "stremio@beta",
+            "qbittorrent": "qbittorrent"
+        ]
+
+        var candidateToken = knownTokensByBundleID[app.bundleID]
+            ?? knownTokensByName[app.name.normalizedAppToken]
+
+        // Preserve support for apps actually installed through Homebrew Cask.
+        if candidateToken == nil, let brew = findBrew() {
+            let output = run(brew, arguments: ["list", "--cask", "--versions"])
+            let appToken = app.name.normalizedAppToken
+            candidateToken = output.split(separator: "\n").compactMap { line -> String? in
+                let parts = line.split(whereSeparator: { $0.isWhitespace })
+                guard parts.count >= 2 else { return nil }
+                let token = String(parts[0])
+                let normalized = token.normalizedAppToken
+                return normalized == appToken ? token : nil
+            }.first
+        }
+
+        guard let token = candidateToken,
               let url = URL(string: "https://formulae.brew.sh/api/cask/\(token).json"),
               let (data, _) = try? await URLSession.shared.data(from: url),
               let json = try? JSONSerialization.jsonObject(with: data) as? [String: Any],
-              let version = json["version"] as? String else { return nil }
-        return UpdateResult(latestVersion: version, sourceName: "Homebrew Cask", sourceURL: URL(string: "https://formulae.brew.sh/cask/\(token)"),
+              let version = json["version"] as? String,
+              version.lowercased() != "latest" else { return nil }
+        return UpdateResult(latestVersion: version, sourceName: "Homebrew Cask",
+                            sourceURL: URL(string: "https://formulae.brew.sh/cask/\(token)"),
                             brewToken: token, appStoreURL: nil)
     }
 
@@ -90,6 +124,53 @@ final class UpdateChecker {
         let releaseURL = (json["html_url"] as? String).flatMap(URL.init(string:))
         return UpdateResult(latestVersion: tag, sourceName: "GitHub Releases", sourceURL: releaseURL,
                             brewToken: nil, appStoreURL: nil)
+    }
+
+
+    private func checkGitLab(app: AppRecord) async -> UpdateResult? {
+        // GitLab's public Releases API is supported for explicitly mapped projects.
+        // Never infer a project from a bundle identifier or app name.
+        let repositories: [String: String] = [:] // Add verified bundle-ID to GitLab project mappings here.
+        let infoURL = app.path.appendingPathComponent("Contents/Info.plist")
+        let plist = (try? Data(contentsOf: infoURL)).flatMap {
+            try? PropertyListSerialization.propertyList(from: $0, options: [], format: nil) as? [String: Any]
+        }
+        let project = repositories[app.bundleID] ?? (plist?["GitLabProjectPath"] as? String)
+        guard let project, !project.isEmpty else { return nil }
+        let encodedProject = project.addingPercentEncoding(withAllowedCharacters: .urlPathAllowed) ?? project
+        guard let url = URL(string: "https://gitlab.com/api/v4/projects/\(encodedProject)/releases/permalink/latest") else {
+            return nil
+        }
+        var request = URLRequest(url: url)
+        request.setValue("MacUpdateScanner/1.0", forHTTPHeaderField: "User-Agent")
+        guard let (data, _) = try? await URLSession.shared.data(for: request),
+              let json = try? JSONSerialization.jsonObject(with: data) as? [String: Any],
+              let tag = json["tag_name"] as? String else { return nil }
+        let releaseURL = (json["_links"] as? [String: Any])?["self"] as? String
+        return UpdateResult(latestVersion: tag, sourceName: "GitLab Releases",
+                            sourceURL: releaseURL.flatMap(URL.init(string:)),
+                            brewToken: nil, appStoreURL: nil)
+    }
+
+    private func checkSOFA(app: AppRecord) async -> UpdateResult? {
+        // SOFA is an Apple-platform feed, not a third-party app catalog.
+        // Use it only for Safari, whose releases are represented in the Safari feed.
+        guard app.bundleID == "com.apple.Safari" || app.name.localizedCaseInsensitiveCompare("Safari") == .orderedSame,
+              let url = URL(string: "https://sofafeed.macadmins.io/v2/safari_data_feed.json"),
+              let (data, _) = try? await URLSession.shared.data(from: url),
+              let json = try? JSONSerialization.jsonObject(with: data) as? [String: Any],
+              let versions = json["OSVersions"] as? [[String: Any]] else { return nil }
+
+        for entry in versions {
+            let platform = (entry["OSVersion"] as? String) ?? (entry["OSName"] as? String) ?? ""
+            guard platform.localizedCaseInsensitiveContains("Safari"),
+                  let latest = entry["Latest"] as? [String: Any],
+                  let version = latest["ProductVersion"] as? String else { continue }
+            return UpdateResult(latestVersion: version, sourceName: "SOFA Apple Updates",
+                                sourceURL: URL(string: "https://sofa.macadmins.io/"),
+                                brewToken: nil, appStoreURL: nil)
+        }
+        return nil
     }
 
     private func findBrew() -> String? {
@@ -130,7 +211,9 @@ private final class SparkleFeedParser: NSObject, XMLParserDelegate {
         guard inItem else { return }
         if elementName == "enclosure" {
             if let raw = attributeDict["url"] { currentDownload = URL(string: raw) }
-            currentVersion = attributeDict["sparkle:version"] ?? attributeDict["version"]
+            currentVersion = attributeDict.first(where: { $0.key.lowercased().hasSuffix(":version") })?.value
+                ?? attributeDict["version"]
+                ?? attributeDict.first(where: { $0.key.lowercased().hasSuffix(":shortversionstring") })?.value
         }
     }
 

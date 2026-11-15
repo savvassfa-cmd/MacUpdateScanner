@@ -47,6 +47,7 @@ struct ContentView: View {
             SummaryTile(title: "Updates", value: "\(model.updateCount)", icon: "arrow.down.circle", tint: .orange)
             SummaryTile(title: "Up to date", value: "\(model.upToDateCount)", icon: "checkmark.circle", tint: .green)
             SummaryTile(title: "Unverified", value: "\(model.unverifiedCount)", icon: "questionmark.circle", tint: .secondary)
+            SummaryTile(title: "System", value: "\(model.systemAppCount)", icon: "gearshape.2", tint: .secondary)
         }
         .padding(.horizontal, 20).padding(.bottom, 16)
     }
@@ -58,6 +59,8 @@ struct ContentView: View {
                 Text("Updates").tag("Updates")
                 Text("Up to date").tag("Up to date")
                 Text("Unverified").tag("Unverified")
+                Text("System apps").tag("System")
+                Text("App Store").tag("App Store")
             }
             .frame(width: 150)
             .labelsHidden()
@@ -140,6 +143,12 @@ private struct AppRow: View {
                 Text("Installed: \(app.installedVersion)" + (app.latestVersion.map { "  ·  Latest: \($0)" } ?? ""))
                     .font(.caption).foregroundColor(.secondary)
                 Text(app.details).font(.caption2).foregroundColor(.secondary).lineLimit(1)
+                if app.status == .unverified || app.status == .error {
+                    Text("Bundle ID: \(app.bundleID.isEmpty ? "Not available" : app.bundleID)")
+                        .font(.system(size: 10, design: .monospaced))
+                        .foregroundColor(.secondary)
+                        .textSelection(.enabled)
+                }
             }
             Spacer(minLength: 8)
             if app.canInstall {
@@ -156,6 +165,8 @@ private struct AppRow: View {
         case .updateAvailable: Text("UPDATE").font(.system(size: 9, weight: .bold)).foregroundColor(.orange)
         case .upToDate: Text("CURRENT").font(.system(size: 9, weight: .bold)).foregroundColor(.green)
         case .checking: Text("CHECKING").font(.system(size: 9, weight: .bold)).foregroundColor(.blue)
+        case .managedBySystem: Text("macOS").font(.system(size: 9, weight: .bold)).foregroundColor(.secondary)
+        case .appStoreManaged: Text("APP STORE").font(.system(size: 9, weight: .bold)).foregroundColor(.secondary)
         case .unverified, .error: Text("UNVERIFIED").font(.system(size: 9, weight: .bold)).foregroundColor(.secondary)
         }
     }
