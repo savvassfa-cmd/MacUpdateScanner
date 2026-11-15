@@ -14,6 +14,12 @@ final class UpdateChecker {
         if let result = await checkKnownGitHub(app: app) {
             return result
         }
+        if let result = await checkGitLab(app: app) {
+            return result
+        }
+        if let result = await checkSOFA(app: app) {
+            return result
+        }
         return nil
     }
 
@@ -120,6 +126,50 @@ final class UpdateChecker {
                             brewToken: nil, appStoreURL: nil)
     }
 
+
+    private func checkGitLab(app: AppRecord) async -> UpdateResult? {
+        // GitLab's public Releases API is supported for explicitly mapped projects.
+        // Never infer a project from a bundle identifier or app name.
+        let repositories: [String: String] = [
+            // Add verified "bundle identifier": "group/project" mappings here.
+        ]
+        guard let project = repositories[app.bundleID],
+              let encodedProject = project.addingPercentEncoding(withAllowedCharacters: .urlPathAllowed),
+              let url = URL(string: "https://gitlab.com/api/v4/projects/\\(encodedProject)/releases/permalink/latest") else {
+            return nil
+        }
+        var request = URLRequest(url: url)
+        request.setValue("MacUpdateScanner/1.0", forHTTPHeaderField: "User-Agent")
+        guard let (data, _) = try? await URLSession.shared.data(for: request),
+              let json = try? JSONSerialization.jsonObject(with: data) as? [String: Any],
+              let tag = json["tag_name"] as? String else { return nil }
+        let releaseURL = (json["_links"] as? [String: Any])?["self"] as? String
+        return UpdateResult(latestVersion: tag, sourceName: "GitLab Releases",
+                            sourceURL: releaseURL.flatMap(URL.init(string:)),
+                            brewToken: nil, appStoreURL: nil)
+    }
+
+    private func checkSOFA(app: AppRecord) async -> UpdateResult? {
+        // SOFA is an Apple-platform feed, not a third-party app catalog.
+        // Use it only for Safari, whose releases are represented in the Safari feed.
+        guard app.bundleID == "com.apple.Safari" || app.name.localizedCaseInsensitiveCompare("Safari") == .orderedSame,
+              let url = URL(string: "https://sofafeed.macadmins.io/v2/safari_data_feed.json"),
+              let (data, _) = try? await URLSession.shared.data(from: url),
+              let json = try? JSONSerialization.jsonObject(with: data) as? [String: Any],
+              let versions = json["OSVersions"] as? [[String: Any]] else { return nil }
+
+        for entry in versions {
+            let platform = (entry["OSVersion"] as? String) ?? (entry["OSName"] as? String) ?? ""
+            guard platform.localizedCaseInsensitiveContains("Safari"),
+                  let latest = entry["Latest"] as? [String: Any],
+                  let version = latest["ProductVersion"] as? String else { continue }
+            return UpdateResult(latestVersion: version, sourceName: "SOFA Apple Updates",
+                                sourceURL: URL(string: "https://sofa.macadmins.io/"),
+                                brewToken: nil, appStoreURL: nil)
+        }
+        return nil
+    }
+
     private func findBrew() -> String? {
         ["/opt/homebrew/bin/brew", "/usr/local/bin/brew"].first { FileManager.default.isExecutableFile(atPath: $0) }
     }
@@ -158,7 +208,9 @@ private final class SparkleFeedParser: NSObject, XMLParserDelegate {
         guard inItem else { return }
         if elementName == "enclosure" {
             if let raw = attributeDict["url"] { currentDownload = URL(string: raw) }
-            currentVersion = attributeDict["sparkle:version"] ?? attributeDict["version"]
+            currentVersion = attributeDict.first(where: { $0.key.lowercased().hasSuffix(":version") })?.value
+                ?? attributeDict["version"]
+                ?? attributeDict.first(where: { $0.key.lowercased().hasSuffix(":shortversionstring") })?.value
         }
     }
 
