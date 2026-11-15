@@ -61,8 +61,19 @@ struct UpdateResult {
 
 extension String {
     func versionCompare(to other: String) -> ComparisonResult {
-        let cleanA = self.trimmingCharacters(in: .whitespacesAndNewlines)
-        let cleanB = other.trimmingCharacters(in: .whitespacesAndNewlines)
+        // Some apps (for example Zoom) display the numeric build in parentheses,
+        // while package catalogs append it as another dotted component:
+        // "7.2.5 (90525)" == "7.2.5.90525".
+        func normalizedVersion(_ value: String) -> String {
+            let trimmed = value.trimmingCharacters(in: .whitespacesAndNewlines)
+            return trimmed.replacingOccurrences(
+                of: #"\\s*\\((\\d+)\\)"#,
+                with: ".$1",
+                options: .regularExpression
+            )
+        }
+        let cleanA = normalizedVersion(self)
+        let cleanB = normalizedVersion(other)
         return cleanA.compare(cleanB, options: [.numeric, .caseInsensitive])
     }
 
