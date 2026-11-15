@@ -57,7 +57,7 @@ final class ScannerModel: ObservableObject {
                         apps[index].latestVersion = result.latestVersion
                         apps[index].sourceName = result.sourceName
                         apps[index].sourceURL = result.sourceURL
-                        apps[index].details = "Apple system app — latest Safari version reported by \\(result.sourceName): \\(result.latestVersion). Install updates through macOS Software Update"
+                        apps[index].details = "Apple system app — latest Safari version reported by \(result.sourceName): \(result.latestVersion). Install updates through macOS Software Update"
                     } else {
                         apps[index].details = "Apple system app — updates are delivered through macOS Software Update"
                     }
